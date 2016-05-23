@@ -22,4 +22,4 @@ set -o pipefailscript_dir=$(cd $(dirname "${BASH_SOURCE}") && pwd -P)
 
 cd "${script_dir}"
 
-docker build -t mesosphere/kubernetes-socat .
+docker build -t k8s.io/kubernetes-dind-socat .
