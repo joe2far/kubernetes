@@ -22,16 +22,24 @@ node:
   - >
     NAME=$$(cut -f2 -d/ <<<$${APISERVER_NAME}) &&
     N=$${NAME##*_} &&
-    PUBLIC_RESOURCES="$$(if [ $${N} = 2 ]; then echo ";cpus(public):2;mem(public):640;ports(public):[7000-7999]"; fi)" &&
+    HOSTNAME_OVERRIDE=$$(getent hosts node | cut -d' ' -f1 | sort -u | tail -1) &&
     DOCKER_NETWORK_OFFSET=0.0.$${N}.0
-    exec wrapdocker hyperkube kubelet
-    --hostname-override=$$(getent hosts node | cut -d' ' -f1 | sort -u | tail -1)
+    exec wrapdocker bash -c "
+    hyperkube kubelet
+    --hostname-override=$${HOSTNAME_OVERRIDE}
     --node-labels="rack=$${N},gen=201$${N}"
     --api-servers=http://apiserver:8888
     --allow-privileged
     --cluster-dns=10.10.10.10
     --cluster-domain=cluster.local
-    --config=/var/lib/kubelet/manifests
+    --config=/var/lib/kubelet/manifests &
+    hyperkube proxy
+    --hostname-override=$${HOSTNAME_OVERRIDE}
+    --master=http://apiserver:8888
+    --conntrack-max=0
+    --v=4 &
+    wait \$$(jobs -p)
+    "
   command: []
   environment:
   - VAR_LIB_DOCKER_SIZE=10
