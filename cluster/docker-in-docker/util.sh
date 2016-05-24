@@ -61,6 +61,9 @@ function cluster::docker_in_docker::docker_compose {
 function cluster::docker_in_docker::docker_compose_lazy_pull {
   for img in $(grep '^\s*image:\s' "${provider_root}/docker-compose.yml" | sed 's/[ \t]*image:[ \t]*//'); do
     read repo tag <<<$(echo "${img} "| sed 's/:/ /')
+    if [[ "${repo}" = k8s.io/kubernetes-dind* ]]; then
+      continue
+    fi
     if [ -z "${tag}" ]; then
       tag="latest"
     fi
