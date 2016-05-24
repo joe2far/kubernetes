@@ -58,7 +58,7 @@ DOCKER_IN_DOCKER_ADDON_TIMEOUT="${DOCKER_IN_DOCKER_ADDON_TIMEOUT:-180}"
 # ${DOCKER_IN_DOCKER_WORK_DIR}/<component>/mesos - storage of mesos slave work (e.g. task logs)
 # If using docker-machine or boot2docker, should be under /Users (which is mounted from the host into the docker vm).
 # If running in a container, $HOME should be resolved outside of the container.
-DOCKER_IN_DOCKER_WORK_DIR="${DOCKER_IN_DOCKER_WORK_DIR:-${HOME}/tmp/kubernetes}"
+DOCKER_IN_DOCKER_WORK_DIR="${DOCKER_IN_DOCKER_WORK_DIR:-${HOME}/tmp/kubernetes-dind}"
 
 # Arguments to pass to docker-engine running on the mesos-slave-dind containers.
 DOCKER_DAEMON_ARGS="${DOCKER_DAEMON_ARGS:---log-level=error}"
