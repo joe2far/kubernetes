@@ -315,7 +315,7 @@ function kube-down {
   echo "Stopping ${KUBERNETES_PROVIDER} cluster" 1>&2
   # Since restoring a stopped cluster is not yet supported, use the nuclear option
   cluster::docker_in_docker::docker_compose kill
-  cluster::docker_in_docker::docker_compose rm -f
+  cluster::docker_in_docker::docker_compose rm -f --all
 }
 
 function test-setup {
