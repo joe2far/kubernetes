@@ -21,7 +21,7 @@ INSTANCE_PREFIX="${INSTANCE_PREFIX:-kubernetes}"
 MASTER_NAME="${INSTANCE_PREFIX}-master"
 NODE_NAMES=($(eval echo ${INSTANCE_PREFIX}-minion-{1..${NUM_NODES}}))
 
-SERVICE_CLUSTER_IP_RANGE="${SERVICE_CLUSTER_IP_RANGE:-10.10.10.0/24}"
+SERVICE_CLUSTER_IP_RANGE="${SERVICE_CLUSTER_IP_RANGE:-10.0.0.0/24}"
 
 # Extra options to set on the Docker command line.  This is useful for setting
 # --insecure-registry for local registries.
@@ -29,7 +29,7 @@ DOCKER_OPTS=""
 
 # Optional: Deploy cluster DNS.
 ENABLE_CLUSTER_DNS="${ENABLE_CLUSTER_DNS:-true}"
-DNS_SERVER_IP="${DNS_SERVER_IP:-10.10.10.10}"
+DNS_SERVER_IP="${DNS_SERVER_IP:-10.0.0.10}"
 DNS_DOMAIN="${DNS_DOMAIN:-cluster.local}"
 DNS_REPLICAS="${DNS_REPLICAS:-1}"
 
