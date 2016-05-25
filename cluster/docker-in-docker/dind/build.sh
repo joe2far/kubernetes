@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds a docker image that contains the kubernetes-mesos binaries.
+# Builds a docker image that contains the kubernetes binaries.
 
 set -o errexit
 set -o nounset
@@ -50,7 +50,7 @@ fi
 kube_bin_path=$(dirname ${hyperkube_path})
 
 # download nsenter and socat
-overlay_dir=${MESOS_DOCKER_OVERLAY_DIR:-${script_dir}/overlay}
+overlay_dir=${DOCKER_IN_DOCKER_OVERLAY_DIR:-${script_dir}/overlay}
 mkdir -p "${overlay_dir}"
 docker run --rm -v "${overlay_dir}:/target" jpetazzo/nsenter
 docker run --rm -v "${overlay_dir}:/target" mesosphere/kubernetes-socat

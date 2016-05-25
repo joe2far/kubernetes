@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Builds a docker image that contains the kubernetes-mesos binaries.
+# Builds a docker image that contains the kubernetes binaries.
 
 set -o errexit
 set -o nounset
