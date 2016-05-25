@@ -43,6 +43,9 @@ function cluster::docker_in_docker::docker_compose {
     "DOCKER_IN_DOCKER_ADDON_TIMEOUT"
     "DOCKER_IN_DOCKER_WORK_DIR"
     "DOCKER_DAEMON_ARGS"
+    "SERVICE_CLUSTER_IP_RANGE"
+    "DNS_SERVER_IP"
+    "DNS_DOMAIN"
   )
 
   (

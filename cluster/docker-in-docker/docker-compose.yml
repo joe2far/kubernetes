@@ -30,8 +30,8 @@ node:
     --node-labels="rack=$${N},gen=201$${N}"
     --api-servers=http://apiserver:8888
     --allow-privileged
-    --cluster-dns=10.10.10.10
-    --cluster-domain=cluster.local
+    --cluster-dns=${DNS_SERVER_IP}
+    --cluster-domain=${DNS_DOMAIN}
     --config=/var/lib/kubelet/manifests &
     hyperkube proxy
     --hostname-override=$${HOSTNAME_OVERRIDE}
@@ -67,7 +67,7 @@ apiserver:
     --token-auth-file=/var/run/kubernetes/auth/token-users
     --basic-auth-file=/var/run/kubernetes/auth/basic-users
     --service-account-key-file=/var/run/kubernetes/auth/service-accounts.key
-    --service-cluster-ip-range=10.10.10.0/24
+    --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE}
     --service-node-port-range=30000-32767
     --allow-privileged
     --tls-cert-file=/var/run/kubernetes/auth/apiserver.crt
