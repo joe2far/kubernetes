@@ -215,6 +215,11 @@ function verify-prereqs {
   echo "Verifying required commands" 1>&2
   hash docker 2>/dev/null || { echo "Missing required command: docker" 1>&2; exit 1; }
   hash docker 2>/dev/null || { echo "Missing required command: docker-compose" 1>&2; exit 1; }
+  docker run busybox grep -q -w -e "overlay\|aufs" /proc/filesystems || {
+    echo "Missing required kernel filesystem support: overlay or aufs."
+    echo "Run 'sudo modprobe overlay' or 'sudo modprobe aufs' (on Ubuntu) and try again."
+    exit 1
+  }
 }
 
 # Initialize
