@@ -274,7 +274,7 @@ function kube-up {
   trap "cluster::docker_in_docker::dump_logs '${log_dir}'" EXIT
 
   echo "Starting ${KUBERNETES_PROVIDER} cluster" 1>&2
-  cluster::docker_in_docker::docker_compose up -d
+  cluster::docker_in_docker::docker_compose up -d --force-recreate
   echo "Scaling ${KUBERNETES_PROVIDER} cluster to ${NUM_NODES} slaves"
   cluster::docker_in_docker::docker_compose scale node=${NUM_NODES}
 
