@@ -21,7 +21,8 @@ INSTANCE_PREFIX="${INSTANCE_PREFIX:-kubernetes}"
 MASTER_NAME="${INSTANCE_PREFIX}-master"
 NODE_NAMES=($(eval echo ${INSTANCE_PREFIX}-minion-{1..${NUM_NODES}}))
 
-SERVICE_CLUSTER_IP_RANGE="${SERVICE_CLUSTER_IP_RANGE:-10.0.0.0/24}"
+APISERVER_SERVICE_IP=${APISERVER_SERVICE_IP:-10.0.0.1}
+SERVICE_CIDR="${SERVICE_CIDR:-${APISERVER_SERVICE_IP}/24}"
 
 # Extra options to set on the Docker command line.  This is useful for setting
 # --insecure-registry for local registries.

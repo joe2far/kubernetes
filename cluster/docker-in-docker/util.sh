@@ -42,8 +42,8 @@ function cluster::docker_in_docker::docker_compose {
     "DOCKER_IN_DOCKER_API_TIMEOUT"
     "DOCKER_IN_DOCKER_ADDON_TIMEOUT"
     "DOCKER_IN_DOCKER_WORK_DIR"
-    "DOCKER_DAEMON_ARGS"
-    "SERVICE_CLUSTER_IP_RANGE"
+    "APISERVER_SERVICE_IP"
+    "SERVICE_CIDR"
     "DNS_SERVER_IP"
     "DNS_DOMAIN"
   )
@@ -109,39 +109,6 @@ function cluster::docker_in_docker::run_in_docker_test {
   return "$?"
 }
 
-# Run kube-cagen.sh inside docker.
-# Creating and signing in the same environment avoids a subject comparison string_mask issue.
-function cluster::docker_in_docker::run_in_docker_cagen {
-  local out_dir="$1"
-
-  docker run \
-    --rm \
-    -t $(tty &>/dev/null && echo "-i") \
-    -v "${out_dir}:/var/run/kubernetes/auth" \
-    mesosphere/kubernetes-keygen:v1.0.0 \
-    "cagen" \
-    "/var/run/kubernetes/auth"
-
-  return "$?"
-}
-
-# Run kube-keygen.sh inside docker.
-function cluster::docker_in_docker::run_in_docker_keygen {
-  local out_file_path="$1"
-  local out_dir="$(dirname "${out_file_path}")"
-  local out_file="$(basename "${out_file_path}")"
-
-  docker run \
-    --rm \
-    -t $(tty &>/dev/null && echo "-i") \
-    -v "${out_dir}:/var/run/kubernetes/auth" \
-    mesosphere/kubernetes-keygen:v1.0.0 \
-    "keygen" \
-    "/var/run/kubernetes/auth/${out_file}"
-
-  return "$?"
-}
-
 # Generate kubeconfig data for the created cluster.
 function create-kubeconfig {
   local -r auth_dir="${DOCKER_IN_DOCKER_WORK_DIR}/auth"
@@ -156,7 +123,7 @@ function create-kubeconfig {
   fi
 
   local token="$(cut -d, -f1 ${auth_dir}/token-users)"
-  "${kubectl}" config set-cluster "${CONTEXT}" --server="${KUBE_SERVER}" --certificate-authority="${auth_dir}/root-ca.crt"
+  "${kubectl}" config set-cluster "${CONTEXT}" --server="${KUBE_SERVER}" --certificate-authority="${auth_dir}/ca.pem"
   "${kubectl}" config set-context "${CONTEXT}" --cluster="${CONTEXT}" --user="cluster-admin"
   "${kubectl}" config set-credentials cluster-admin --token="${token}"
   "${kubectl}" config use-context "${CONTEXT}" --cluster="${CONTEXT}"
@@ -232,14 +199,8 @@ function cluster::docker_in_docker::init_auth {
   mkdir -p "${auth_dir}"
   rm -rf "${auth_dir}"/*
 
-  echo "Creating Certificate Authority" 1>&2
-  cluster::docker_in_docker::buffer_output cluster::docker_in_docker::run_in_docker_cagen "${auth_dir}"
-  echo "Certificate Authority Key: ${auth_dir}/root-ca.key" 1>&2
-  echo "Certificate Authority Cert: ${auth_dir}/root-ca.crt" 1>&2
-
-  echo "Creating Service Account RSA Key" 1>&2
-  cluster::docker_in_docker::buffer_output cluster::docker_in_docker::run_in_docker_keygen "${auth_dir}/service-accounts.key"
-  echo "Service Account Key: ${auth_dir}/service-accounts.key" 1>&2
+  echo "Creating Service Accounts Key: ${auth_dir}/service-accounts-key.pem" 1>&2
+  openssl genrsa -out "${auth_dir}/service-accounts-key.pem" 2048 &>/dev/null
 
   echo "Creating User Accounts" 1>&2
   cluster::docker_in_docker::create_token_user "cluster-admin" > "${auth_dir}/token-users"

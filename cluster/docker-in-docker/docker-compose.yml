@@ -57,7 +57,8 @@ apiserver:
   - >
     echo "Hostname: $$(hostname -f) ($$(hostname -f | xargs resolveip.sh))" &&
     await-health-check "-t=${DOCKER_IN_DOCKER_ETCD_TIMEOUT}" http://etcd:4001/health &&
-    await-file "-t=${KUBE_KEYGEN_TIMEOUT}" /var/run/kubernetes/auth/apiserver.crt &&
+    await-file "-t=${KUBE_KEYGEN_TIMEOUT}" /var/run/kubernetes/auth/apiserver.pem &&
+    await-file "-t=${KUBE_KEYGEN_TIMEOUT}" /var/run/kubernetes/auth/service-accounts-key.pem &&
     hyperkube apiserver
     --insecure-bind-address=$$(resolveip.sh apiserver)
     --external-hostname=apiserver
@@ -67,12 +68,12 @@ apiserver:
     --authorization-mode=AlwaysAllow
     --token-auth-file=/var/run/kubernetes/auth/token-users
     --basic-auth-file=/var/run/kubernetes/auth/basic-users
-    --service-account-key-file=/var/run/kubernetes/auth/service-accounts.key
-    --service-cluster-ip-range=${SERVICE_CLUSTER_IP_RANGE}
+    --service-account-key-file=/var/run/kubernetes/auth/service-accounts-key.pem
+    --service-cluster-ip-range=${SERVICE_CIDR}
     --service-node-port-range=30000-32767
     --allow-privileged
-    --tls-cert-file=/var/run/kubernetes/auth/apiserver.crt
-    --tls-private-key-file=/var/run/kubernetes/auth/apiserver.key
+    --tls-cert-file=/var/run/kubernetes/auth/apiserver.pem
+    --tls-private-key-file=/var/run/kubernetes/auth/apiserver-key.pem
     --runtime-config=api/all
     --v=4
   ports: [ "8888:8888", "6443:6443" ]
@@ -89,11 +90,13 @@ controller:
   - >
     echo "Hostname: $$(hostname -f) ($$(hostname -f | xargs resolveip.sh))" &&
     await-health-check "-t=${DOCKER_IN_DOCKER_API_TIMEOUT}" http://apiserver:8888/healthz &&
+    await-file "-t=${KUBE_KEYGEN_TIMEOUT}" /var/run/kubernetes/auth/ca.pem &&
+    await-file "-t=${KUBE_KEYGEN_TIMEOUT}" /var/run/kubernetes/auth/service-accounts-key.pem &&
     hyperkube controller-manager
     --address=$$(resolveip.sh controller)
     --master=http://apiserver:8888
-    --service-account-private-key-file=/var/run/kubernetes/auth/service-accounts.key
-    --root-ca-file=/var/run/kubernetes/auth/root-ca.crt
+    --service-account-private-key-file=/var/run/kubernetes/auth/service-accounts-key.pem
+    --root-ca-file=/var/run/kubernetes/auth/ca.pem
     --v=4
   volumes:
   - ${DOCKER_IN_DOCKER_WORK_DIR}/auth:/var/run/kubernetes/auth:ro
@@ -117,12 +120,18 @@ scheduler:
   volumes:
   - ./static-pod.json:/opt/static-pods/static-pod.json
 keygen:
-  image: mesosphere/kubernetes-keygen:v1.0.0
-  command:
-  - certgen
-  - /var/run/kubernetes/auth
-  - /var/run/kubernetes/auth
-  - apiserver
+  image: cfssl/cfssl:latest
+  entrypoint:
+  - /bin/bash
+  - -ec
+  - |
+    cd /var/run/kubernetes/auth
+    echo '{"CN":"CA","key":{"algo":"rsa","size":2048}}' | cfssl gencert -initca - | cfssljson -bare ca -
+    echo '{"signing":{"default":{"expiry":"43800h","usages":["signing","key encipherment","server auth","client auth"]}}}' > ca-config.json
+    export ADDRESS="$$(getent hosts apiserver | awk '{ print $$1 ; exit }'),${APISERVER_SERVICE_IP},kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster.local"
+    echo '{"CN":"'apiserver'","hosts":[""],"key":{"algo":"rsa","size":2048}}' | \
+      cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -hostname="$${ADDRESS}" - | \
+      cfssljson -bare apiserver
   volumes:
   - ${DOCKER_IN_DOCKER_WORK_DIR}/auth:/var/run/kubernetes/auth
   links:
