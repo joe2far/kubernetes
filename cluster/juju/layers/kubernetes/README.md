@@ -30,7 +30,7 @@ juju add-relation kubernetes etcd
 
 # Configuration
 For your convenience this charm supports some configuration options to set up
-a Kuberentes cluster that works in your environment:  
+a Kubernetes cluster that works in your environment:  
 
 **version**: Set the version of the Kubernetes containers to deploy.
 The default value is "v1.0.6".  Changing the version causes the all the
